@@ -1446,7 +1446,7 @@ forge deploy && forge install
 - Use `py -3.12` or `.venv\Scripts\python.exe`; the machine default `python` may be newer and unsupported by some dependencies.
 - Set `CERBERUS_WS_ROOT=./.cerberus-ws` instead of `/tmp/cerb-ws`.
 - `isolation.py` must branch on `sys.platform`: Windows uses Job Objects + `taskkill /T /F`; POSIX keeps `resource`, `start_new_session`, and `killpg`. Never import `resource` on Windows.
-- Forge CLI may require Node 20 even if local Node is newer; switch versions only when running Forge commands.
+- Forge CLI 15.x requires Node 24.22.1+ or 26.12.1+; verify with `forge --version` after changing Node versions.
 - Manual UI checks use the `browse` MCP in OpenCode (§14.5).
 
 ---

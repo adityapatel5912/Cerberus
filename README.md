@@ -15,9 +15,11 @@ Local development environment is set up. Application code starts at Phase 0/1 of
 
 | Tool | Version |
 |---|---|
-| Node.js | 24.18 |
+| Node.js | 26.13.1 |
+| npm | 11.20.0 |
 | Python | 3.12 (`py -3.12`) |
 | Git | 2.55 |
+| Forge CLI | 15.1.0 |
 
 Python dependencies live in `.venv`:
 
