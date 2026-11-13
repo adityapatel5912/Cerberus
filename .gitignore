@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Runtime workspaces and outputs
+.cerberus-ws/
+dist/
+build/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Test artifacts
+playwright-report/
+test-results/
+coverage/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
