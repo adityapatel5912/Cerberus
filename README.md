@@ -37,6 +37,24 @@ Copy `.env.example` to `.env` and fill the required values. `.env` is gitignored
 - Atlassian/Bitbucket/Jira/cloud values are filled when the corresponding phase starts.
 - Never commit real credentials.
 
+### Connected services
+
+| Service | Endpoint | Credential |
+|---|---|---|
+| GitHub | `github.com/adityapatel5912/Cerberus` | Git Credential Manager (primary remote `origin`) |
+| Bitbucket | `bitbucket.org/cerberus_5912/cerberus` | `BITBUCKET_API_TOKEN` + `ATLASSIAN_EMAIL` (mirror remote `bitbucket`) |
+| Bitbucket fixture | `bitbucket.org/cerberus_5912/cerberus-trapdoor` | same token |
+| Jira | `cerberus-5912.atlassian.net` | `JIRA_API_TOKEN` (Basic) against the site URL |
+| Jira project | `CERB` | — |
+
+Verify the Jira wiring at any time:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\jira_check.py
+```
+
+It creates a throwaway `Bug` with an ADF description, comments on it, reads it back, and deletes it.
+
 ## Manual testing
 
 Use the `browse` MCP in OpenCode for manual UI checks. Drive the real browser, inspect before acting, and verify each state change with a fresh page read.
