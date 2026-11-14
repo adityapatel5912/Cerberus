@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "cerberus-pre-push-guard": {
+      "type": "http",
+      "url": "http://127.0.0.1:3000/api/mcp",
+      "headers": { "Authorization": "Bearer ${CERBERUS_MCP_TOKEN}" }
+    }
+  }
+}

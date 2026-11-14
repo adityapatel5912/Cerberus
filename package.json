@@ -5,7 +5,20 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "concurrently -n gateway,ui -c cyan,magenta \"npm:dev:gateway\" \"npm:dev:ui\"",
+    "dev:gateway": "tsx watch server.ts",
+    "dev:ui": "vite",
+    "build": "vite build",
+    "serve": "tsx server.ts",
+    "forge:lint": "forge lint --manifest forge-bitbucket-app/manifest.yml && forge lint --manifest forge-jira-app/manifest.yml",
+    "py:mutation": ".venv/Scripts/python.exe backend/mutation_fuzz.py",
+    "gate:0": "npm run forge:lint && npm run py:mutation",
+    "codegen:schema": ".venv/Scripts/python.exe backend/export_schema.py > src/types/verdict.schema.json && json2ts src/types/verdict.schema.json -o src/types/verdict.d.ts",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:py": ".venv/Scripts/python.exe -m pytest -q",
+    "verify:ci": "npm run codegen:schema && git diff --exit-code src/types/verdict.d.ts && npm run typecheck && playwright test",
+    "jira:check": ".venv/Scripts/python.exe scripts/jira_check.py"
   },
   "keywords": [],
   "author": "",
@@ -18,12 +31,18 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@fontsource/dm-sans": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/plus-jakarta-sans": "^5.3.0",
+    "@playwright/test": "^1.65.1",
     "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "concurrently": "^10.0.7",
+    "json-schema-to-typescript": "^16.0.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.8"

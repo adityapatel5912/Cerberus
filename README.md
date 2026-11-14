@@ -15,11 +15,15 @@ Local development environment is set up. Application code starts at Phase 0/1 of
 
 | Tool | Version |
 |---|---|
+| Git | 2.56.0.windows.4 |
+| Git Credential Manager | 3.0.2 |
 | Node.js | 26.13.1 |
 | npm | 11.20.0 |
 | Python | 3.12 (`py -3.12`) |
-| Git | 2.55 |
 | Forge CLI | 15.1.0 |
+| Playwright | 1.65.1 (Chromium installed) |
+| cloudflared | 2026.11.0 |
+| Google Cloud SDK | 593.0.0 |
 
 Python dependencies live in `.venv`:
 
@@ -28,6 +32,22 @@ Python dependencies live in `.venv`:
 ```
 
 Node dependencies are installed with `npm install`.
+
+## npm scripts
+
+| Script | Purpose |
+|---|---|
+| `npm run dev` | Express gateway on `:3000` + Vite UI on `:5173` |
+| `npm run serve` | Gateway only, serving `dist/` |
+| `npm run gate:0` | `forge lint` on both manifests + mutation benchmark |
+| `npm run codegen:schema` | Python verdict schema → TypeScript types |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run test:e2e` | Playwright suite |
+| `npm run test:py` | pytest suite |
+| `npm run verify:ci` | codegen + schema-drift check + typecheck + Playwright |
+| `npm run jira:check` | Live Jira round-trip probe |
+
+Full environment details: [`docs/setup.md`](./docs/setup.md).
 
 ## Configuration
 

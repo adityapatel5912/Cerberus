@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "cerberus-pre-push-guard": {
+      "command": "npx",
+      "args": ["tsx", "server.ts", "--mcp-stdio"],
+      "env": {
+        "CERBERUS_TARGET_REPO": "./demo-seed-repo",
+        "CERBERUS_SANDBOX_MODE": "strict-isolated",
+        "CERBERUS_ALLOW_MUTATION": "true"
+      }
+    }
+  }
+}
