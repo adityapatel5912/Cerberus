@@ -1,0 +1,102 @@
+# Cerberus — Forge App 1 — Bitbucket Gatekeeper
+#
+# Phase 0 contract corrections applied (docs/platform-contracts.md, 2026-11-18):
+#   C1  bitbucket:pullRequestPanel does not exist -> bitbucket:repoPullRequestOverviewPanel
+#   C2  bitbucket:mergeCheck now REQUIRES a triggers: array (added on-code-pushed, pre-merge)
+#   C3  avi:bitbucket:push:updated does not exist -> avi:bitbucket:updated:pullrequest
+#       (payload.changes present only when a new commit reaches the source branch)
+#   C4  avi:bitbucket:pipeline:failed does not exist -> avi:bitbucket:updated:build-status
+#       (+ created:build-status; Pipeline Medic filters for failed states)
+#   C10 inline styles declared via permissions.content.styles
+#
+# The merge gate is READ-ONLY and FAIL-CLOSED (plan D4):
+#   evaluateMergeGate only reads storage; a cache miss returns IN_PROGRESS instantly.
+#   No component self-attests PASS (plan D5) — only HMAC-authenticated backend ingest may.
+
+modules:
+  # PR-page panel: the three-head verdict console (Custom UI, shared with the local workbench).
+  bitbucket:repoPullRequestOverviewPanel:
+    - key: cerberus-pr-telemetry-panel
+      resource: cerberus-bb-ui
+      resolver:
+        function: panelResolver
+      title: Cerberus Pre-Merge Verification & Exploit Sandbox
+
+  # Native merge check. Returns { success: boolean, message?: string }.
+  # Exceptions are treated as failures; Bitbucket stores the result itself.
+  bitbucket:mergeCheck:
+    - key: cerberus-hardened-merge-gate
+      function: bb-merge-check-fn
+      name: Cerberus 3-Head Pre-Merge Gatekeeper
+      description: Blocks merge until contract, exploit, and pipeline proofs pass.
+      triggers:
+        - on-code-pushed
+
+  # PR updated (new commit on the source branch) -> fire-and-forget dispatch.
+  trigger:
+    - key: cerberus-pr-push-trigger
+      function: bb-push-updated-fn
+      events:
+        - avi:bitbucket:updated:pullrequest
+    # Pipeline Medic: build statuses for the head commit. Filter for failures in code.
+    - key: cerberus-build-status-trigger
+      function: bb-pipeline-failed-fn
+      events:
+        - avi:bitbucket:created:build-status
+        - avi:bitbucket:updated:build-status
+
+  # HMAC-authenticated verdict ingest — the ONLY writer of PASS (plan D3/D5).
+  webtrigger:
+    - key: cerberus-verdict-ingest
+      function: verdict-ingest-fn
+
+  # Hourly sweep of expired verdict-cache entries (TTL 30min, plan section 7.6).
+  scheduledTrigger:
+    - key: cerberus-storage-gc
+      function: storage-gc-fn
+      interval: hour
+
+  function:
+    - key: panelResolver
+      handler: index.panelResolver
+    - key: bb-merge-check-fn
+      handler: mergeCheck.evaluateMergeGate
+    - key: bb-push-updated-fn
+      handler: pipelineTrigger.onCodePushed
+    - key: bb-pipeline-failed-fn
+      handler: pipelineTrigger.onPipelineFailed
+    - key: verdict-ingest-fn
+      handler: ingest.handleVerdictIngest
+    - key: storage-gc-fn
+      handler: gc.sweepExpiredVerdicts
+    - key: commit-fix-fn
+      handler: commitFix.commitPatchedFilesToBitbucket
+
+resources:
+  - key: cerberus-bb-ui
+    path: static/cerberus-ui/dist
+
+permissions:
+  scopes:
+    - read:pullrequest:bitbucket
+    - write:pullrequest:bitbucket
+    - read:repository:bitbucket
+    - write:repository:bitbucket
+    - read:pipeline:bitbucket
+    - storage:app
+  content:
+    styles:
+      - unsafe-inline
+  external:
+    fetch:
+      backend:
+        - address: "*.run.app"
+        - address: "*.trycloudflare.com"
+        - address: "*.ngrok-free.app"
+
+app:
+  runtime:
+    name: nodejs24.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/890504f7-5bfe-4dd0-a703-3cfd1ec9e71e

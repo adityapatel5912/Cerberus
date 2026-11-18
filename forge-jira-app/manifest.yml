@@ -1,0 +1,130 @@
+# Cerberus — Forge App 2 — Jira, Rovo, MCP
+#
+# NO Bitbucket scopes here (plan D10): App 2 reads verdicts from the Cerberus
+# backend and requests Bitbucket writes through it. All Jira writes go through
+# api.asUser() so Jira performs its own authorization check.
+#
+# Phase 0 contract notes (docs/platform-contracts.md, 2026-11-18):
+#   C6  rovo:mcp (Preview) exposes actions as tools; schema requires key/name(<=30)/tools.
+#       Third-party MCP clients connect at https://mcp.atlassian.com/forge/<appId>
+#       (site admin must enable external exposure). Our site is Jira Free (no Rovo),
+#       so the remote MCP server at CERBERUS_BACKEND_URL/api/mcp remains the
+#       operative path; these modules go live on a Rovo-inclusive plan.
+#   C9  invoke() front-end payloads cap at 500 KB -> lean verdict envelopes,
+#       evidence bundles fetched lazily by key.
+
+modules:
+  # Jira issue panel: blast radius, linked artifacts, escalation surface.
+  jira:issuePanel:
+    - key: cerberus-jira-blast-radius-panel
+      resource: cerberus-jira-ui
+      resolver:
+        function: panelResolver
+      title: Cerberus PR Verification & Blast Radius
+      icon: https://developer.atlassian.com/platform/forge/images/issue-panel-icon.svg
+
+  # Native Rovo agent. Bitbucket writes are proxied to the Cerberus backend;
+  # this agent only ever REQUESTS them, never performs them (plan D10).
+  rovo:agent:
+    - key: cerberus-rovo-secops-agent
+      name: Cerberus
+      description: Pre-merge verification, sandbox exploit replay, and self-healing patch agent.
+      prompt: >
+        You are Cerberus, an autonomous compiler-backed verification agent.
+        Never guess or hallucinate line numbers, timings, or verdicts. Always invoke your
+        actions to fetch live verdicts. If a proof phase is missing, say the verdict is
+        incomplete rather than asserting safety. Bitbucket writes are executed by the
+        Cerberus backend; you request them, you do not perform them.
+      conversationStarters:
+        - Why is PR #12 blocked from merging right now?
+        - Replay the IDOR exploit on /api/v1/invoices/{id} and show the leaked fields
+        - Apply the verified unified fix to PR #12 and unlock the merge check
+        - Escalate the confirmed cross-tenant invoice leak into a P1 Jira Bug
+      actions:
+        - fetch-pr-verdict-action
+        - replay-sandbox-exploit-action
+        - apply-unified-fix-action
+        - escalate-jira-bug-action
+
+  # Deterministic action verbs. These are the ONLY things the agent can do.
+  # Function keys must be <=23 characters and match ^[a-zA-Z0-9_-]+$.
+  action:
+    - key: fetch-pr-verdict-action
+      name: Fetch Cerberus 3-Head PR Verdict
+      function: rovo-fetch-verdict
+      actionVerb: GET
+      description: Retrieves deterministic Contract Shield, RedTeam, and Pipeline Medic status for a PR.
+      inputs:
+        prId: { title: Pull Request ID, type: integer, required: true, description: "e.g. 12" }
+    - key: replay-sandbox-exploit-action
+      name: Replay Route Exploit in Isolated Sandbox
+      function: rovo-replay-exploit
+      actionVerb: GET
+      description: Boots the route in an ephemeral SQLite sandbox and returns the four-phase proof matrix.
+      inputs:
+        prId: { title: Pull Request ID, type: integer, required: true, description: "e.g. 12" }
+        endpoint: { title: Target Endpoint, type: string, required: false, description: "defaults to /api/v1/invoices/inv_victim_901" }
+    - key: apply-unified-fix-action
+      name: Commit Verified Unified Fix to PR Branch
+      function: rovo-apply-fix
+      actionVerb: UPDATE
+      description: Requests the backend to commit the verified unified patch via App 1 and re-verify.
+      inputs:
+        prId: { title: Pull Request ID, type: integer, required: true, description: "e.g. 12" }
+    - key: escalate-jira-bug-action
+      name: Escalate Confirmed Exploit to Jira P1 Bug
+      function: rovo-escalate-bug
+      actionVerb: CREATE
+      description: Creates a linked Jira Bug with the runnable curl PoC, blast radius, and evidence digest.
+      inputs:
+        issueKey: { title: Parent Jira Issue Key, type: string, required: true, description: "e.g. CERB-104" }
+
+  # Rovo MCP (Preview): exposes the four actions above as tools.
+  # Fallback active on Jira Free: remote MCP server at CERBERUS_BACKEND_URL/api/mcp.
+  # An app may declare at most ONE rovo:mcp module.
+  rovo:mcp:
+    - key: cerberus-pre-push-mcp-server
+      name: Cerberus Pre-Push MCP
+      tools:
+        - fetch-pr-verdict-action
+        - replay-sandbox-exploit-action
+        - apply-unified-fix-action
+        - escalate-jira-bug-action
+
+  function:
+    - key: panelResolver
+      handler: index.panelResolver
+    - key: rovo-fetch-verdict
+      handler: rovoActions.fetchVerdict
+    - key: rovo-replay-exploit
+      handler: rovoActions.replayExploit
+    - key: rovo-apply-fix
+      handler: rovoActions.applyUnifiedFix
+    - key: rovo-escalate-bug
+      handler: rovoActions.escalateJiraBug
+
+resources:
+  - key: cerberus-jira-ui
+    path: static/cerberus-jira-ui/dist
+
+permissions:
+  scopes:
+    - read:jira-work
+    - write:jira-work
+    - storage:app
+  content:
+    styles:
+      - "unsafe-inline"
+  external:
+    fetch:
+      backend:
+        - address: "*.run.app"
+        - address: "*.trycloudflare.com"
+        - address: "*.ngrok-free.app"
+
+app:
+  runtime:
+    name: nodejs24.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/3ab1ef8c-457f-4019-90fb-2c395d5e0052

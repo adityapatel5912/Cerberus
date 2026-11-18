@@ -197,6 +197,14 @@ Strict top bar: **Zone 1** single-line `Cerberus` wordmark · **Zone 2** four si
 
 ## 7. Forge App 1 — Bitbucket Gatekeeper
 
+> **Corrected by Phase 0 verification (2026-11-18).** The authoritative manifest is
+> `forge-bitbucket-app/manifest.yml`; corrections vs the block below are recorded in
+> [`docs/platform-contracts.md`](./../docs/platform-contracts.md): panel key is
+> `bitbucket:repoPullRequestOverviewPanel`, `mergeCheck` requires `triggers:`,
+> event identifiers are `avi:bitbucket:updated:pullrequest` and
+> `avi:bitbucket:updated:build-status`, egress entries use `- address:`, runtime is
+> `nodejs24.x`.
+
 ### 7.1 Manifest (`/forge-bitbucket-app/manifest.yml`)
 
 ```yaml
@@ -550,6 +558,12 @@ export async function publishReport(ws: string, repo: string, sha: string, v: an
 ---
 
 ## 8. Forge App 2 — Jira, Rovo, MCP
+
+> **Corrected by Phase 0 verification (2026-11-18).** The authoritative manifest is
+> `forge-jira-app/manifest.yml`; corrections vs the block below are recorded in
+> [`docs/platform-contracts.md`](./../docs/platform-contracts.md): `rovo:mcp` takes
+> `tools:` (action keys) instead of `function:`, function keys are ≤ 23 chars with no
+> dots, egress entries use `- address:`, runtime is `nodejs24.x`.
 
 ### 8.1 Manifest (`/forge-jira-app/manifest.yml`)
 
